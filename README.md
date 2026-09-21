@@ -18,6 +18,15 @@ English: Personal collection of sysadmin & DevOps automation scripts. Written du
 | python/remote_host_ping_check.py | Batch host ping connectivity test. 批量主机ping连通性探测 |
 | python/dir_size_stats.py | Recursive subdirectory size statistics. 递归统计子目录占用大小 |
 | python/log_error_scan.py | Scan log file for error keywords. 日志错误关键词检索 |
+| powershell/DeploySoftwareSilent.ps1 | Silent install script for endpoint, registry check before install. 终端静默安装脚本，注册表检测是否已安装 |
+| powershell/RemoteBatchDeploy.ps1 | Batch remote deploy via WinRM, read host list from file. WinRM批量远程部署，读取主机清单 |
+| powershell/CheckSoftwareInstallStatus.ps1 | Check software install status, export CSV report. 批量巡检软件安装状态，导出CSV报表 |
+| bash/pkg_silent_install.sh | Linux rpm/deb silent package install. Linux rpm/deb静默包安装脚本 |
+| bash/ssh_batch_deploy.sh | Batch remote deploy over ssh for linux nodes. SSH批量分发到Linux节点 |
+| bash/check_linux_software.sh | Batch check software status on linux hosts. Linux主机批量软件状态巡检 |
+| python/host_list_generator.py | Validate and generate target host list. 校验并生成批量部署主机清单 |
+| python/deploy_report_parser.py | Parse deploy logs and generate summary report. 解析部署日志，生成汇总报表 |
+| python/file_hash_verify.py | SHA256 hash verify for installer package. 安装包SHA256完整性校验 |
 
 ## Environment 运行环境
 - PowerShell 5.1 / PowerShell Core
