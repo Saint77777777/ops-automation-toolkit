@@ -1,0 +1,31 @@
+rem ==============================================
+rem DiskPart script for UEFI GPT Windows deployment
+rem 中文说明：PE环境下UEFI GPT磁盘分区脚本，用于全新硬盘分区，对应图片执行命令
+rem Personal practice, for learning only
+rem ==============================================
+select disk 0
+clean
+convert gpt
+
+rem 1. ESP SYSTEM partition 系统ESP分区 FAT32 100MB
+create partition efi size=100
+format quick fs=fat32 label="SYSTEM"
+assign letter="S"
+
+rem 2. MSR partition 微软保留分区
+create partition msr size=16
+
+rem 3. Windows main partition 系统主分区
+create partition primary
+format quick fs=ntfs label="Windows"
+assign letter="W"
+
+rem 4. Recovery partition 恢复分区
+create partition primary size=500
+format quick fs=ntfs label="Recovery"
+assign letter="R"
+set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac"
+gpt attributes=0x8000000000000001
+
+list volume
+exit
