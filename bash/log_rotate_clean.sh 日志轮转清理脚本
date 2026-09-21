@@ -1,0 +1,24 @@
+#!/bin/bash
+# Log rotation and clean script
+# 中文说明：日志轮转脚本，压缩旧日志，保留指定份数，删除超期文件
+# Personal practice, for learning only
+
+# Configurations | 配置项
+LOG_SRC="/opt/app/logs"
+RETENTION_COUNT=10
+LOG_DIR="/var/ops_log"
+LOG_FILE="${LOG_DIR}/log_rotate_$(date +%Y%m%d).log"
+mkdir -p ${LOG_DIR}
+
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${TIMESTAMP}] Start log rotate task | 开始日志轮转" >> ${LOG_FILE}
+
+# Compress log files | 压缩日志文件
+find ${LOG_SRC} -maxdepth 1 -type f -name "*.log" ! -name "*.gz" -mtime +1 -exec gzip {} \;
+
+# Keep only RETENTION_COUNT compressed files | 只保留指定个数压缩包
+cd ${LOG_SRC} || exit
+ls -t *.log.gz 2>/dev/null | tail -n +$((RETENTION_COUNT+1)) | xargs rm -f
+
+echo "[${TIMESTAMP}] Log rotate finished | 日志轮转完成" >> ${LOG_FILE}
+echo "" >> ${LOG_FILE}
