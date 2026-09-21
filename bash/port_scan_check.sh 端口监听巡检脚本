@@ -1,0 +1,16 @@
+#!/bin/bash
+# Listen port inspection script
+# 中文说明：检查服务器监听端口，输出监听IP、端口、进程
+# Personal practice, for learning only
+
+LOG_DIR="/var/ops_log"
+LOG_FILE="${LOG_DIR}/port_check_$(date +%Y%m%d).log"
+mkdir -p ${LOG_DIR}
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+
+echo "[${TIMESTAMP}] Start listening port check | 开始监听端口巡检" >> ${LOG_FILE}
+echo "=============================================" >> ${LOG_FILE}
+ss -tulnp | awk '{print}' >> ${LOG_FILE}
+echo "=============================================" >> ${LOG_FILE}
+echo "[${TIMESTAMP}] Port check finished | 端口巡检完成" >> ${LOG_FILE}
+echo "" >> ${LOG_FILE}
