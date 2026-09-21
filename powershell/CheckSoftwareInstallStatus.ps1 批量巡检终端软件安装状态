@@ -1,0 +1,40 @@
+<#
+.SYNOPSIS
+Batch check target hosts to confirm whether specific software is installed, export report to CSV.
+中文说明：批量巡检多台终端，检查指定软件是否安装，结果导出CSV报表。
+#>
+$hostListFile = ".\target_hosts.txt"
+$reportPath = ".\software_install_report_$(Get-Date -Format yyyyMMdd).csv"
+$appDisplayName = "云枢"
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+$reportData = @()
+
+$targetHosts = Get-Content $hostListFile -Encoding utf8
+foreach($pc in $targetHosts){
+    $resultObj = [PSCustomObject]@{
+        HostName = $pc
+        Status = "Offline / Access Denied"
+        IsInstalled = $false
+    }
+    try{
+        $checkResult = Invoke-Command -ComputerName $pc -ScriptBlock {
+            Get-ItemProperty -Path $using:regPath -ErrorAction SilentlyContinue | Where-Object {
+                $_.DisplayName -match $using:appDisplayName
+            }
+        } -ErrorAction Stop
+        if($checkResult){
+            $resultObj.Status = "Online"
+            $resultObj.IsInstalled = $true
+        }else{
+            $resultObj.Status = "Online"
+            $resultObj.IsInstalled = $false
+        }
+    }
+    catch{
+        $resultObj.Status = "Unreachable"
+    }
+    $reportData += $resultObj
+}
+# Export csv report | 导出CSV巡检报表
+$reportData | Export-Csv -Path $reportPath -Encoding UTF8 -NoTypeInformation
+Write-Host "Check finished, report saved to $reportPath | 巡检完成，报表已保存"
