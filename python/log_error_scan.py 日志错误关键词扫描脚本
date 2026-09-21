@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""
+Scan log file for error keywords, output matched lines
+中文说明：扫描日志文件，检索错误关键词，输出匹配行并记录日志
+Personal practice, for learning purpose
+"""
+from datetime import datetime
+
+def scan_log_file(file_path, keywords):
+    """Scan log file for error keywords | 在日志文件搜索错误关键词"""
+    match_lines = []
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                for kw in keywords:
+                    if kw.lower() in line.lower():
+                        match_lines.append(line.strip())
+                        break
+    except FileNotFoundError:
+        return ["File not found | 文件不存在"]
+    return match_lines
+
+if __name__ == "__main__":
+    log_target = "/opt/app/logs/app.log"
+    alert_keywords = ["error", "exception", "fail", "timeout"]
+    out_log = f"log_scan_{datetime.now().strftime('%Y%m%d')}.log"
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    result = scan_log_file(log_target, alert_keywords)
+    with open(out_log, "a", encoding="utf-8") as f:
+        f.write(f"[{ts}] Start log error scan | 开始日志错误扫描\n")
+        for line in result:
+            f.write(f"[{ts}] MATCH: {line}\n")
+        f.write(f"[{ts}] Scan complete | 扫描结束\n\n")
+    print(f"Found {len(result)} matched lines | 找到 {len(result)} 匹配行")
