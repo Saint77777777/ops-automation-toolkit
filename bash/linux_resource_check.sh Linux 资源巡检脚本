@@ -1,0 +1,39 @@
+#!/bin/bash
+# Linux resource health check script
+# 中文说明：Linux服务器资源健康巡检脚本，采集CPU、内存、磁盘使用率，写入日志
+# Personal practice, for learning only
+
+# Configurations | 配置项
+THRESHOLD_MEM=85
+THRESHOLD_DISK=85
+LOG_DIR="/var/ops_log"
+LOG_FILE="${LOG_DIR}/resource_$(date +%Y%m%d).log"
+
+mkdir -p ${LOG_DIR}
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+
+echo "[${TIMESTAMP}] Start resource check | 开始资源巡检" >> ${LOG_FILE}
+
+# Get cpu usage | 获取CPU使用率
+CPU_USE=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
+CPU_USE=$(printf "%.2f" $CPU_USE)
+echo "[${TIMESTAMP}] CPU Usage: ${CPU_USE}% | CPU使用率：${CPU_USE}%" >> ${LOG_FILE}
+
+# Get memory usage | 获取内存使用率
+MEM_RAW=$(free | awk '/Mem/{printf "%.2f", $3/$2 *100}')
+echo "[${TIMESTAMP}] Memory Usage: ${MEM_RAW}% | 内存使用率：${MEM_RAW}%" >> ${LOG_FILE}
+if (( $(echo "$MEM_RAW > $THRESHOLD_MEM" | bc -l) )); then
+    echo "[${TIMESTAMP}] ALERT: Memory exceed threshold ${THRESHOLD_MEM}% | 告警：内存超过阈值" >> ${LOG_FILE}
+fi
+
+# Disk check | 磁盘使用率巡检
+df -h | awk 'NR>1 && $1 !~ /tmpfs|loop/ {print $5,$1}' | while read -r line; do
+    USE=$(echo $line | cut -d% -f1)
+    DEV=$(echo $line | cut -d' ' -f2)
+    if [ $USE -ge $THRESHOLD_DISK ];then
+        echo "[${TIMESTAMP}] ALERT: Disk $DEV usage ${USE}% over threshold | 告警：磁盘${DEV}使用率超限" >> ${LOG_FILE}
+    fi
+done
+
+echo "[${TIMESTAMP}] Check done | 巡检完成" >> ${LOG_FILE}
+echo "" >> ${LOG_FILE}
