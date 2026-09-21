@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""
+Scan target directory and collect subdirectory size statistics
+中文说明：扫描目标目录，统计子目录占用大小并输出报表
+Personal practice, for learning purpose
+"""
+import os
+from datetime import datetime
+
+def get_dir_size(path):
+    """Calculate directory total size | 计算目录总大小"""
+    total = 0
+    with os.scandir(path) as it:
+        for entry in it:
+            if entry.is_file(follow_symlinks=False):
+                total += entry.stat(follow_symlinks=False).st_size
+            elif entry.is_dir(follow_symlinks=False):
+                total += get_dir_size(entry.path)
+    return total
+
+def bytes_to_gb(byte_num):
+    """Convert bytes to GB | 字节转为GB"""
+    return round(byte_num / 1024 / 1024 / 1024,3)
+
+if __name__ == "__main__":
+    target_path = "/opt/app"
+    log_path = f"dir_size_{datetime.now().strftime('%Y%m%d')}.log"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(f"[{timestamp}] Start directory size stat | 开始目录大小统计\n")
+        for item in os.scandir(target_path):
+            if item.is_dir(follow_symlinks=False):
+                size_gb = bytes_to_gb(get_dir_size(item.path))
+                line = f"{item.name} : {size_gb} GB"
+                print(line)
+                f.write(f"[{timestamp}] {line}\n")
+        f.write(f"[{timestamp}] Stat finished | 统计完成\n\n")
