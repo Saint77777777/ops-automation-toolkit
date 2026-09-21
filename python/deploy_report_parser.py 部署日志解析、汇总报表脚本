@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""
+Parse deployment log file and generate summary report
+中文说明：解析批量部署日志，自动汇总成功/失败统计，输出报表
+Personal practice, for learning purpose
+"""
+from datetime import datetime
+import re
+
+if __name__ == "__main__":
+    log_path = "ops_logs/remote_deploy/batch_deploy_20260921.log"
+    success_count = 0
+    fail_count = 0
+    offline_count = 0
+    with open(log_path,"r",encoding="utf-8") as f:
+        lines = f.readlines()
+    for line in lines:
+        if "Deploy script executed successfully" in line:
+            success_count +=1
+        elif "ERROR remote deploy failed" in line:
+            fail_count +=1
+        elif "Offline / Access Denied" in line or "Unreachable" in line:
+            offline_count +=1
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    report_text = f"""
+[{ts}] Deployment Summary Report | 部署汇总报表
+Success | 成功: {success_count}
+Failed | 失败: {fail_count}
+Offline | 主机不可达: {offline_count}
+Total | 总计: {success_count+fail_count+offline_count}
+"""
+    print(report_text)
+    with open("deploy_summary_report.txt","w",encoding="utf-8") as rf:
+        rf.write(report_text)
