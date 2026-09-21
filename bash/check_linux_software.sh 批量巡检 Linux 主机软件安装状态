@@ -1,0 +1,26 @@
+#!/bin/bash
+# Batch check software install status on remote linux hosts
+# 中文说明：批量巡检远程Linux主机，检查指定软件是否安装
+# Personal practice, for learning only
+
+HOST_LIST="./linux_hosts.txt"
+CHECK_PKG="agent-client"
+LOG_DIR="/var/ops_log"
+LOG_FILE="${LOG_DIR}/linux_software_check_$(date +%Y%m%d).log"
+mkdir -p ${LOG_DIR}
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${TIMESTAMP}] Start batch linux software status check | 开始批量Linux软件状态巡检" >> ${LOG_FILE}
+
+while read -r host; do
+    [[ -z "$host" ]] && continue
+    echo "[${TIMESTAMP}] Check host $host | 检查主机 $host" >> ${LOG_FILE}
+    # remote run check command | 远程执行检查命令
+    result=$(ssh root@${host} "rpm -qa | grep ${CHECK_PKG} || dpkg -l | grep ${CHECK_PKG}" 2>/dev/null)
+    if [ -n "${result}" ];then
+        echo "[${TIMESTAMP}] $host : ${CHECK_PKG} INSTALLED | $host：软件已安装" >> ${LOG_FILE}
+    else
+        echo "[${TIMESTAMP}] $host : ${CHECK_PKG} NOT INSTALLED | $host：软件未安装" >> ${LOG_FILE}
+    fi
+done < ${HOST_LIST}
+
+echo "[${TIMESTAMP}] Check all hosts completed | 所有主机巡检完成`n" >> ${LOG_FILE}
