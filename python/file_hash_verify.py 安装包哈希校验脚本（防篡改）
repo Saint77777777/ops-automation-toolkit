@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""
+Calculate SHA256 hash for installer package, verify file integrity before deploy
+中文说明：计算安装包SHA256哈希值，部署前校验安装包完整性，防止文件篡改
+Personal practice, for learning purpose
+"""
+import hashlib
+
+def get_sha256(file_path):
+    """Calculate file sha256 hash | 计算文件SHA256哈希"""
+    sha256_obj = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(4096):
+            sha256_obj.update(chunk)
+    return sha256_obj.hexdigest()
+
+if __name__ == "__main__":
+    installer_file = "YunShuSetup.exe"
+    expected_hash = "REPLACE_WITH_CORRECT_SHA256" # 预期哈希占位符
+    try:
+        current_hash = get_sha256(installer_file)
+        print(f"Calculated hash | 计算得到哈希: {current_hash}")
+        if current_hash == expected_hash:
+            print("Hash match | 哈希校验通过，可以部署")
+        else:
+            print("Hash mismatch | 哈希不匹配，文件被篡改，禁止部署")
+    except FileNotFoundError:
+        print("File not found | 文件不存在")
