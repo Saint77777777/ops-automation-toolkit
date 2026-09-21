@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""
+Batch host connectivity check, ping test
+中文说明：批量主机连通性探测脚本，使用ping检测主机存活状态，输出日志文件
+Personal practice, for learning purpose
+"""
+import subprocess
+from datetime import datetime
+
+# Host list to test | 需要探测的主机列表
+host_list = [
+    "8.8.8.8",
+    "1.1.1.1"
+]
+log_path = "host_check_{}.log".format(datetime.now().strftime("%Y%m%d"))
+
+def ping_host(host):
+    """
+    Send single ping packet to target host
+    向目标主机发送单次ping包
+    """
+    cmd = ["ping", "-c", "1", host]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    return res.returncode == 0
+
+def main():
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(f"[{timestamp}] Start host ping check | 开始主机连通性探测\n")
+    for ip in host_list:
+        status = ping_host(ip)
+        result_text = f"{ip} UP | {ip} 主机可达" if status else f"{ip} DOWN | {ip} 主机不可达"
+        print(result_text)
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(f"[{timestamp}] {result_text}\n")
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(f"[{timestamp}] Check completed | 探测结束\n\n")
+
+if __name__ == "__main__":
+    main()
