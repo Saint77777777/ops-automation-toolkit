@@ -1,0 +1,41 @@
+<#
+.SYNOPSIS
+Collect windows host basic asset info: OS, memory, disk, network.
+中文说明：采集Windows主机基础资产信息：系统版本、内存、磁盘、网卡。
+#>
+$outFile = "C:\ops_logs\asset_$(Get-Date -Format yyyyMMdd).json"
+$assetInfo = [PSCustomObject]@{}
+
+# OS info | 操作系统信息
+$osInfo = Get-ComputerInfo
+$assetInfo | Add-Member -MemberType NoteProperty -Name "OsName" -Value $osInfo.OsName
+$assetInfo | Add-Member -MemberType NoteProperty -Name "OsVersion" -Value $osInfo.OsVersion
+
+# Hardware info | 硬件信息
+$assetInfo | Add-Member -MemberType NoteProperty -Name "TotalMemoryGB" -Value ([math]::Round($osInfo.TotalPhysicalMemory /1GB,2))
+
+# Disk info | 磁盘信息
+$diskList = @()
+Get-Volume | Where-Object {$_.DriveLetter -and $_.SizeRemaining -and $_.DriveType -eq 'Fixed'} | ForEach-Object{
+    $diskObj = [PSCustomObject]@{
+        DriveLetter = $_.DriveLetter
+        TotalGB = [math]::Round($_.Size /1GB,2)
+        FreeGB = [math]::Round($_.SizeRemaining /1GB,2)
+    }
+    $diskList += $diskObj
+}
+$assetInfo | Add-Member -MemberType NoteProperty -Name "Disks" -Value $diskList
+
+# Network | 网卡信息
+$netList = @()
+Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.InterfaceAlias -notmatch "Loopback"} | ForEach-Object{
+    $netObj = [PSCustomObject]@{
+        Interface = $_.InterfaceAlias
+        IPAddress = $_.IPAddress
+    }
+    $netList += $netObj
+}
+$assetInfo | Add-Member -MemberType NoteProperty -Name "Network" -Value $netList
+
+$assetInfo | ConvertTo-Json -Depth 5 | Out-File $outFile
+Write-Host "Asset info saved to $outFile | 资产信息已保存"
