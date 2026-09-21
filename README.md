@@ -16,7 +16,6 @@ English: Personal collection of sysadmin & DevOps automation scripts. Written du
 | bash/file_backup_sync.sh | Incremental directory backup by rsync. rsync增量目录备份 |
 | bash/port_scan_check.sh | Collect listening port and process info. 监听端口与进程信息采集 |
 | python/remote_host_ping_check.py | Batch host ping connectivity test. 批量主机ping连通性探测 |
-| python/webhook_alert.py | Push alert message via webhook (WeCom). Webhook推送告警消息（企业微信） |
 | python/dir_size_stats.py | Recursive subdirectory size statistics. 递归统计子目录占用大小 |
 | python/log_error_scan.py | Scan log file for error keywords. 日志错误关键词检索 |
 
