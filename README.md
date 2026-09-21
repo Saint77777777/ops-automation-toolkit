@@ -11,6 +11,9 @@ English: Personal collection of sysadmin & DevOps automation scripts. Written du
 | powershell/LogArchiveClean.ps1 | Archive old logs to zip and clean source files. 日志压缩归档并清理源文件 |
 | powershell/FileIntegrityCheck.ps1 | SHA256 file hash check for tamper detection. SHA256文件哈希校验，检测篡改 |
 | powershell/RemoteAssetCollect.ps1 | Collect Windows host asset info export to JSON. Windows主机资产信息采集导出JSON |
+| powershell/pe_deploy/CreatePartitions-UEFI-FFU.txt | DiskPart script for UEFI GPT partition in WinPE. WinPE下DiskPart脚本，GPT UEFI磁盘自动分区 |
+| powershell/pe_deploy/ApplyImage.bat | DISM apply wim image and repair bootloader. DISM部署WIM镜像并修复系统引导 |
+| powershell/pe_deploy/DeployAll.bat | One-click full deployment: partition + apply image + reboot. 一键完整部署：分区+镜像写入+重启 |
 | bash/linux_resource_check.sh | Linux server CPU / Memory / Disk resource check. Linux服务器CPU、内存、磁盘资源巡检 |
 | bash/log_rotate_clean.sh | Log rotate, compress and retain limited archives. 日志轮转压缩，保留指定归档数量 |
 | bash/file_backup_sync.sh | Incremental directory backup by rsync. rsync增量目录备份 |
