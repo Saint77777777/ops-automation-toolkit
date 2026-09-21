@@ -1,0 +1,51 @@
+<#
+.SYNOPSIS
+Silent software deployment script for domain endpoint, check registry before install.
+中文说明：域终端静默软件部署脚本，安装前通过注册表检测是否已安装，避免重复安装。
+AUTHOR: personal practice, for learning only
+#>
+# Configurations | 配置项
+$shareInstallerPath = "\\FILESERVER\SoftwareRepo\YunShu\Setup.exe" # 共享安装包路径，占位符
+$localCachePath = "C:\Windows\Temp\YunShuSetup.exe"
+$logFile = "C:\ops_logs\software_deploy_$(Get-Date -Format yyyyMMdd).log"
+$regUninstallPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+$appDisplayName = "云枢" # DisplayName in registry
+
+# Create log dir | 创建日志目录
+if (-not (Test-Path "C:\ops_logs")){
+    New-Item -ItemType Directory -Path "C:\ops_logs" | Out-Null
+}
+$timeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+"[$timeStamp] Start software silent deploy task | 开始软件静默部署" | Out-File $logFile -Append
+
+# Check if software already installed | 检查软件是否已安装
+$isInstalled = Get-ItemProperty -Path $regUninstallPath -ErrorAction SilentlyContinue | Where-Object {
+    $_.DisplayName -match $appDisplayName
+}
+if($isInstalled){
+    "[$timeStamp] $appDisplayName already installed, skip deploy | 软件已安装，跳过部署" | Out-File $logFile -Append
+    exit 0
+}
+
+# Copy installer from network share | 从网络共享拷贝安装包到本地临时目录
+try{
+    Copy-Item -Path $shareInstallerPath -Destination $localCachePath -Force -ErrorAction Stop
+    "[$timeStamp] Installer copied to local temp | 安装包已下载到本地临时目录" | Out-File $logFile -Append
+}
+catch{
+    "[$timeStamp] ERROR: Failed to copy installer | 错误：无法拷贝安装包 : $_" | Out-File $logFile -Append
+    exit 1
+}
+
+# Silent install | 静默安装, YunShu setup use /S parameter
+"[$timeStamp] Start silent install | 开始静默安装" | Out-File $logFile -Append
+Start-Process -FilePath $localCachePath -ArgumentList "/S" -Wait -NoNewWindow
+$installExitCode = $LASTEXITCODE
+
+if($installExitCode -eq 0){
+    "[$timeStamp] Install SUCCESS | 安装成功" | Out-File $logFile -Append
+    Remove-Item $localCachePath -Force # clean temp file
+}else{
+    "[$timeStamp] Install FAILED, exit code $installExitCode | 安装失败，返回码 $installExitCode" | Out-File $logFile -Append
+}
+"[$timeStamp] Deploy task finished | 部署任务结束`n" | Out-File $logFile -Append
