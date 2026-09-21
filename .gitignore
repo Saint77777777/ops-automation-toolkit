@@ -1,0 +1,22 @@
+# Logs
+*.log
+*.tmp
+*.bak
+
+# Report files
+*.csv
+*.txt
+
+# Installer packages
+*.exe
+*.rpm
+*.deb
+*.zip
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# PowerShell temp files
+*.ps1xml
