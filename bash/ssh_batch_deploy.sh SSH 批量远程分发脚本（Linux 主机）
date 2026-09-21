@@ -1,0 +1,35 @@
+#!/bin/bash
+# Batch remote deploy via ssh, push script and execute on multiple linux hosts
+# 中文说明：基于SSH批量远程分发脚本，推送安装脚本并在多台Linux主机执行
+# Personal practice, for learning only
+
+# Configurations | 配置项
+HOST_LIST="./linux_hosts.txt"
+DEPLOY_SCRIPT="./pkg_silent_install.sh"
+LOG_DIR="/var/ops_log"
+LOG_FILE="${LOG_DIR}/ssh_batch_deploy_$(date +%Y%m%d).log"
+mkdir -p ${LOG_DIR}
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${TIMESTAMP}] Start ssh batch remote deploy | 开始SSH批量远程部署" >> ${LOG_FILE}
+
+while read -r host; do
+    if [[ -z "$host" ]];then
+        continue
+    fi
+    echo "[${TIMESTAMP}] Processing host $host | 正在处理主机 $host" >> ${LOG_FILE}
+    # Copy script to remote host | 拷贝脚本到远程主机
+    scp ${DEPLOY_SCRIPT} root@${host}:/tmp/ >/dev/null 2>&1
+    if [ $? -ne 0 ];then
+        echo "[${TIMESTAMP}] $host : SCP transfer failed | $host：文件传输失败" >> ${LOG_FILE}
+        continue
+    fi
+    # Remote execute script | 远程执行部署脚本
+    ssh root@${host} "chmod +x /tmp/pkg_silent_install.sh && /tmp/pkg_silent_install.sh" >> ${LOG_FILE} 2>&1
+    if [ $? -eq 0 ];then
+        echo "[${TIMESTAMP}] $host : Remote deploy success | $host：远程部署成功" >> ${LOG_FILE}
+    else
+        echo "[${TIMESTAMP}] $host : Remote deploy failed | $host：远程部署失败" >> ${LOG_FILE}
+    fi
+done < ${HOST_LIST}
+
+echo "[${TIMESTAMP}] All ssh batch deploy tasks finished | 全部SSH批量部署任务结束`n" >> ${LOG_FILE}
