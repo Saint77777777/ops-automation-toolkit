@@ -1,22 +1,25 @@
 <#
 .SYNOPSIS
-Simple disk volume monitor for Windows server, log to file and alert when usage exceed threshold.
+Disk volume monitor for Windows server, log to file and alert when usage exceed threshold.
+中文说明：Windows磁盘分区监控脚本，记录日志文件，使用率超过阈值触发告警。
 AUTHOR: personal practice, for learning only
 #>
 
+# Configurations 配置项
 $threshold = 85
 $logRoot = "C:\ops_logs"
 $logFile = Join-Path -Path $logRoot -ChildPath "disk_monitor_$(Get-Date -Format 'yyyyMMdd').log"
 
-# create log folder if not exist
+# Create log directory if not exists | 如果日志目录不存在则创建
 if (-not (Test-Path $logRoot)){
     New-Item -ItemType Directory -Path $logRoot | Out-Null
 }
 
 $timeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-"[$timeStamp] Start disk volume check" | Out-File $logFile -Append
+"[$timeStamp] Start disk volume check | 开始磁盘巡检" | Out-File $logFile -Append
 
-# iterate fixed drives only, skip cd-rom
+# Get fixed local drives, skip CD-ROM and removable disk
+# 获取本地固定磁盘，跳过光驱与移动磁盘
 Get-Volume | Where-Object {
     $_.DriveLetter -and $_.SizeRemaining -and $_.DriveType -eq 'Fixed'
 } | ForEach-Object {
@@ -26,9 +29,9 @@ Get-Volume | Where-Object {
     $usedPercent = (($totalSize - $freeSize) / $totalSize) * 100
     $usedPercent = [math]::Round($usedPercent,2)
 
-    $msg = "Drive $driveLetter : Used $usedPercent %"
+    $msg = "Drive $driveLetter : Used $usedPercent % | 驱动器 $driveLetter : 已使用 $usedPercent %"
     if ($usedPercent -ge $threshold){
-        $msg = "ALERT! $msg , threshold: $threshold%"
+        $msg = "ALERT! $msg , threshold: $threshold% | 告警！超过阈值 $threshold%"
         Write-Host $msg -ForegroundColor Red
     }else{
         Write-Host $msg -ForegroundColor Green
@@ -36,4 +39,4 @@ Get-Volume | Where-Object {
     "[$timeStamp] $msg" | Out-File $logFile -Append
 }
 
-"[$timeStamp] Check finished`n" | Out-File $logFile -Append
+"[$timeStamp] Check finished | 巡检结束`n" | Out-File $logFile -Append
