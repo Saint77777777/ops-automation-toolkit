@@ -1,0 +1,50 @@
+#!/bin/bash
+# Linux silent package install script, support rpm / deb
+# 中文说明：Linux静默软件包安装脚本，自动识别rpm/deb包，安装前检测是否已安装
+# Personal practice, for learning only
+
+# Configurations | 配置项
+PKG_URL="https://example.com/repo/agent-package.rpm"
+PKG_NAME="agent-client"
+LOG_DIR="/var/ops_log"
+LOG_FILE="${LOG_DIR}/pkg_install_$(date +%Y%m%d).log"
+mkdir -p ${LOG_DIR}
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+
+echo "[${TIMESTAMP}] Start linux package silent install | 开始Linux软件包静默安装" >> ${LOG_FILE}
+
+# Check if package already installed | 检查软件是否已安装
+if command -v rpm &> /dev/null; then
+    INSTALLED=$(rpm -qa | grep ${PKG_NAME})
+elif command -v dpkg &> /dev/null; then
+    INSTALLED=$(dpkg -l | grep ${PKG_NAME})
+fi
+
+if [ -n "${INSTALLED}" ];then
+    echo "[${TIMESTAMP}] ${PKG_NAME} already installed, skip | 软件已安装，跳过" >> ${LOG_FILE}
+    exit 0
+fi
+
+# Download package | 下载安装包
+TMP_PKG="/tmp/agent_install.pkg"
+curl -s -o ${TMP_PKG} ${PKG_URL}
+if [ $? -ne 0 ];then
+    echo "[${TIMESTAMP}] ERROR: Download package failed | 错误：安装包下载失败" >> ${LOG_FILE}
+    exit 1
+fi
+
+# Install | 安装
+if command -v rpm &> /dev/null; then
+    rpm -ivh ${TMP_PKG} >> ${LOG_FILE} 2>&1
+elif command -v dpkg &> /dev/null; then
+    dpkg -i ${TMP_PKG} >> ${LOG_FILE} 2>&1
+fi
+
+if [ $? -eq 0 ];then
+    echo "[${TIMESTAMP}] Package install SUCCESS | 软件包安装成功" >> ${LOG_FILE}
+else
+    echo "[${TIMESTAMP}] Package install FAILED | 软件包安装失败" >> ${LOG_FILE}
+fi
+
+rm -f ${TMP_PKG}
+echo "[${TIMESTAMP}] Install task finished | 安装任务结束`n" >> ${LOG_FILE}
