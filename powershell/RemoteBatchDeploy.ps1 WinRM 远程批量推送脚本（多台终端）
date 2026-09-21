@@ -1,0 +1,33 @@
+<#
+.SYNOPSIS
+Batch remote software deploy via WinRM, read target host list from text file.
+中文说明：基于WinRM远程批量软件部署，从文本读取目标主机清单，批量下发执行。
+#>
+# Configurations | 配置项
+$hostListFile = ".\target_hosts.txt"
+$deployScriptPath = ".\DeploySoftwareSilent.ps1"
+$logRoot = "C:\ops_logs\remote_deploy"
+if (-not (Test-Path $logRoot)){
+    New-Item -ItemType Directory -Path $logRoot | Out-Null
+}
+$timeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+"[$timeStamp] Start remote batch deploy | 开始远程批量部署" | Out-File "$logRoot\batch_deploy_$(Get-Date -Format yyyyMMdd).log" -Append
+
+# Read target host list | 读取目标主机列表
+$targetHosts = Get-Content $hostListFile -Encoding utf8
+foreach($pc in $targetHosts){
+    Write-Host "Processing $pc | 正在处理主机 $pc"
+    try{
+        # Copy deploy script to remote host | 拷贝部署脚本到远程主机
+        Copy-Item -Path $deployScriptPath -Destination "\\$pc\C$\Windows\Temp\" -Force -ErrorAction Stop
+        # Invoke remote execution | 在远程主机执行静默安装脚本
+        Invoke-Command -ComputerName $pc -ScriptBlock {
+            & "C:\Windows\Temp\DeploySoftwareSilent.ps1"
+        } -ErrorAction Stop
+        "[$timeStamp] $pc : Deploy script executed successfully | $pc：部署脚本执行成功" | Out-File "$logRoot\batch_deploy_$(Get-Date -Format yyyyMMdd).log" -Append
+    }
+    catch{
+        "[$timeStamp] $pc : ERROR remote deploy failed | $pc：远程部署失败 : $_" | Out-File "$logRoot\batch_deploy_$(Get-Date -Format yyyyMMdd).log" -Append
+    }
+}
+"[$timeStamp] All remote deploy tasks finished | 全部远程部署任务结束`n" | Out-File "$logRoot\batch_deploy_$(Get-Date -Format yyyyMMdd).log" -Append
