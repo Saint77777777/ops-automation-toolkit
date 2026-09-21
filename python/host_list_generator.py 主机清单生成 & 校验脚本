@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""
+Generate and validate target host list for batch deployment
+中文说明：生成并校验批量部署用的主机清单，过滤无效IP
+Personal practice, for learning purpose
+"""
+import re
+from datetime import datetime
+
+def is_valid_ip(ip_str):
+    """Check ip format | 校验IP地址格式"""
+    pattern = r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$'
+    return re.match(pattern, ip_str)
+
+if __name__ == "__main__":
+    raw_ip_list = [
+        "192.168.1.10",
+        "192.168.1.11",
+        "192.168.1.abc",
+        "192.168.1.12"
+    ]
+    valid_list = []
+    invalid_list = []
+    for ip in raw_ip_list:
+        if is_valid_ip(ip):
+            valid_list.append(ip)
+        else:
+            invalid_list.append(ip)
+    # Write host file | 写入主机清单文件
+    with open("target_hosts.txt","w",encoding="utf-8") as f:
+        for ip in valid_list:
+            f.write(ip+"\n")
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] Valid hosts count | 有效主机数量: {len(valid_list)}")
+    print(f"[{ts}] Invalid hosts count | 无效主机数量: {len(invalid_list)}")
+    print(f"[{ts}] Host list saved to target_hosts.txt | 主机清单已保存")
