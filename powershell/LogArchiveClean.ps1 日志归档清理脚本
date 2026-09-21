@@ -1,0 +1,38 @@
+<#
+.SYNOPSIS
+Archive old log files to compressed zip and delete source files after archive.
+中文说明：将过期日志压缩打包归档，归档完成后删除原日志文件。
+AUTHOR: personal practice, for learning only
+#>
+
+# Configurations | 配置项
+$sourceLogPath = "C:\app_logs"
+$archiveRoot = "C:\log_archive"
+$retentionDay = 30
+$timeStamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$logFile = Join-Path $archiveRoot "archive_log_$(Get-Date -Format yyyyMMdd).log"
+
+if (-not (Test-Path $archiveRoot)){
+    New-Item -ItemType Directory -Path $archiveRoot | Out-Null
+}
+
+"[$timeStamp] Start log archive task | 开始日志归档任务" | Out-File $logFile -Append
+
+# Get files older than retentionDay | 获取超过保留天数的文件
+$oldFiles = Get-ChildItem -Path $sourceLogPath -File -Filter *.log | Where-Object {
+    $_.LastWriteTime -lt (Get-Date).AddDays(-$retentionDay)
+}
+
+if ($oldFiles.Count -eq 0){
+    "[$timeStamp] No expired log found | 未找到过期日志" | Out-File $logFile -Append
+    exit
+}
+
+$zipName = Join-Path $archiveRoot "log_archive_$timeStamp.zip"
+Compress-Archive -Path $oldFiles.FullName -DestinationPath $zipName
+
+foreach($f in $oldFiles){
+    Remove-Item $f.FullName -Force
+}
+
+"[$timeStamp] Archive finished, total $($oldFiles.Count) files archived. Zip path: $zipName | 归档完成" | Out-File $logFile -Append
