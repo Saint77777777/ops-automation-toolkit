@@ -1,0 +1,47 @@
+<#
+.SYNOPSIS
+Calculate SHA256 hash for target files, compare with last saved hash to detect modification.
+中文说明：对目标文件计算SHA256哈希值，对比历史哈希，发现文件是否被篡改。
+#>
+
+# Configurations | 配置项
+$targetPath = "C:\app_conf"
+$hashStoreFile = "C:\ops_logs\hash_record.txt"
+$timeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+"[$timeStamp] Start file integrity check | 开始文件完整性校验"
+
+$currentHashTable = @{}
+Get-ChildItem -Path $targetPath -File | ForEach-Object {
+    $hash = Get-FileHash $_.FullName -Algorithm SHA256
+    $currentHashTable[$_.FullName] = $hash.Hash
+}
+
+# If hash record not exists, create new record | 如果哈希记录不存在则新建
+if (-not (Test-Path $hashStoreFile)){
+    $currentHashTable | Out-File $hashStoreFile
+    Write-Host "Hash record created | 哈希记录已创建"
+    exit
+}
+
+$oldHashTable = @{}
+Get-Content $hashStoreFile | ForEach-Object {
+    $line = $_.Split("=")
+    if($line.Count -ge 2){
+        $oldHashTable[$line[0]] = $line[1]
+    }
+}
+
+$modifiedCount = 0
+foreach($path in $currentHashTable.Keys){
+    if($oldHashTable.ContainsKey($path) -and $oldHashTable[$path] -ne $currentHashTable[$path]){
+        Write-Host "ALERT: File changed $path | 告警：文件发生变更 $path" -ForegroundColor Red
+        $modifiedCount +=1
+    }
+}
+
+if($modifiedCount -eq 0){
+    Write-Host "No file modification detected | 未检测到文件变更" -ForegroundColor Green
+}
+
+# Overwrite hash record | 更新哈希记录
+$currentHashTable | Out-File $hashStoreFile
